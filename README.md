@@ -31,11 +31,28 @@ row.names(x) <- 1:nrow(x)
 
 # Query duration, distance and geometry
 tic()
-r <- routes(x, nc = 8, nq = 50, server = "http://0.0.0.0:8002/", profile = "auto")
+res <- routes(x, overview = "full", nc = 8, nq = 50, server = "http://0.0.0.0:8002/", profile = "auto")
 toc()
 #> 20.769 sec elapsed
 
-mf_map(r, col = "#94000010", lwd = 1)
+mf_map(res, col = "#94000010", lwd = 1)
 ```
 
 ![Result](./demo.png)
+
+```r
+# Only query duration and distance
+tic()
+dd <- routes(x, overview = FALSE, nc = 8, nq = 50, server = "http://0.0.0.0:8002/", profile = "auto")
+toc()
+#> 18.837 sec elapsed
+
+head(dd)
+#>   duration distance
+#> 1       17       11
+#> 2       30       22
+#> 3       17       12
+#> 4       16       11
+#> 5       12        9
+#> 6       27       27
+```

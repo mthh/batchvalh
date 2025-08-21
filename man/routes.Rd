@@ -4,11 +4,21 @@
 \alias{routes}
 \title{Get Routes}
 \usage{
-routes(x, nc = 1, nq = 100, server, profile = "auto", costing_options = list())
+routes(
+  x,
+  overview = "full",
+  nc = 1,
+  nq = 100,
+  server,
+  profile = "auto",
+  costing_options = list()
+)
 }
 \arguments{
 \item{x}{dataframe with x_src, y_src, x_dst, y_dst in WGS84 coordinates
 (EPSG:4326)}
+
+\item{overview}{overview (FALSE, for no geometry or "full" for detailed geometry)}
 
 \item{nc}{number of CPU cores}
 
@@ -19,17 +29,18 @@ routes(x, nc = 1, nq = 100, server, profile = "auto", costing_options = list())
 \item{profile}{Valhalla profile (costing model)}
 
 \item{costing_options}{list of options to use with the costing model
-(see \url{https://valhalla.github.io/valhalla/api/turn-by-turn/api-reference/#costing-options}}
+(see \url{https://valhalla.github.io/valhalla/api/turn-by-turn/api-reference/#costing-options}
+or valh documentation)}
 }
 \value{
-An sf object or a data.frame is returned.
+An sf object (if overview == "full") or a data.frame
+(if overview == FALSE) is returned.
 }
 \description{
-This function enables the fast computation of routes.
+This function enables the computation of routes.
 }
 \examples{
 \dontrun{
-library(valh)
 apt <- read.csv(system.file("csv/apotheke.csv", package = "valh"))
 x <- cbind(apt[c(1:100,1:100,1:100, 1:100), c(2:3)],
            apt[c(rep(1,100), rep(10,100), rep(20,100), rep(30, 100)), c(2:3)])

@@ -4,6 +4,7 @@
 #'
 #' @param x dataframe with x_src, y_src, x_dst, y_dst in WGS84 coordinates
 #' (EPSG:4326)
+#' @param overview overview (FALSE, for no geometry or "full" for detailed geometry)
 #' @param nc number of CPU cores
 #' @param nq number of queries per chunk
 #' @param server Valhalla server address
@@ -13,7 +14,8 @@
 #' or valh documentation)
 #' @importFrom foreach foreach %dopar%
 #' @export
-#' @return An sf object or a data.frame is returned.
+#' @return An sf object (if overview == "full") or a data.frame
+#' (if overview == FALSE) is returned.
 #' @examples
 #' \dontrun{
 #' apt <- read.csv(system.file("csv/apotheke.csv", package = "valh"))
@@ -30,6 +32,7 @@
 #' par(op)
 #' }
 routes <- function(x,
+                   overview = "full",
                    nc = 1,
                    nq = 100,
                    server,
@@ -47,16 +50,24 @@ routes <- function(x,
   doParallel::registerDoParallel(cl)
   on.exit(parallel::stopCluster(cl))
 
-  res <- foreach(x = ml, .combine = rbind, .inorder = FALSE,
-                  .export = c("bq", "cpgeom")) %dopar%
-    {
-      do.call(rbind, lapply(apply(x, 1, bq, server = server, profile = profile, costing_options = costing_options), cpgeom))
-    }
+  if(overview == FALSE){
+    res <- foreach(x = ml, .combine = rbind, .inorder = FALSE,
+                   .export = c("bq", "cp")) %dopar%
+      {
+        t(sapply(apply(x, 1, bq, server = server, geom = overview, profile = profile, costing_options = costing_options), cp))
+      }
+  } else {
+    res <- foreach(x = ml, .combine = rbind, .inorder = FALSE,
+                    .export = c("bq", "cpgeom")) %dopar%
+      {
+        do.call(rbind, lapply(apply(x, 1, bq, server = server, geom = overview, profile = profile, costing_options = costing_options), cpgeom))
+      }
+  }
   return(res)
 
-}
+  }
 
-bq <- function(x, server, profile, costing_options){
+bq <- function(x, server, geom, profile, costing_options){
   x <- round(x, 5)
   json <- list(
     costing = profile,
@@ -65,7 +76,9 @@ bq <- function(x, server, profile, costing_options){
       list(lon = x[3], lat = x[4])
     )
   )
-
+  if (geom == FALSE) {
+    json$shape_format = "no_shape"
+  }
   if (is.list(costing_options) && length(costing_options) > 0) {
     json$costing_options <- list()
     json$costing_options[[costing]] <- costing_options
@@ -90,9 +103,23 @@ cpgeom <- function(q, req_handle){
       )
     },
     error = function(cond){
-      print(cond)
       sf::st_sf(duration = NA, distance = NA,
                 geometry = sf::st_sfc(sf::st_linestring()), crs = "EPSG:4326")
+    }
+  )
+}
+
+cp <- function(q, req_handle){
+  tryCatch(
+    expr = {
+      req_handle <- curl::new_handle(verbose = FALSE)
+      curl::handle_setopt(req_handle, useragent = "valh_R_package")
+      r <- curl::curl_fetch_memory(q, handle = req_handle)
+      res <- RcppSimdJson::fparse(rawToChar(r$content))
+      round(c(duration = res[[1]]$summary$time / 60, distance = res[[1]]$summary$length))
+    },
+    error = function(cond){
+      return(c(duration = NA, distance = NA))
     }
   )
 }

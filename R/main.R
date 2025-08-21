@@ -81,7 +81,7 @@ bq <- function(x, server, geom, profile, costing_options){
   }
   if (is.list(costing_options) && length(costing_options) > 0) {
     json$costing_options <- list()
-    json$costing_options[[costing]] <- costing_options
+    json$costing_options[[profile]] <- costing_options
   }
 
   utils::URLencode(paste0(server, "route?json=", jsonlite::toJSON(json, auto_unbox = TRUE)))

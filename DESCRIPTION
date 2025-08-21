@@ -1,0 +1,22 @@
+Package: batchvalh
+Title: Batch Access to the OpenStreetMap-Based Routing Service Valhalla for Fast Route Extraction
+Version: 0.0.0.9000
+Authors@R: 
+    person("Matthiey", "Viry", , "matthieu.viry@cnrs.fr", role = c("aut", "cre"))
+Description: The package does what it does
+    (and those who know, know).
+License: GPL (>= 3)
+Imports: 
+    RcppSimdJson,
+    curl,
+    utils, 
+    googlePolylines,
+    jsonlite,
+    sf,
+    parallel,
+    doParallel, 
+    foreach
+Suggests : valh, mapsf
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
